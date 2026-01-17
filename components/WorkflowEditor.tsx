@@ -65,16 +65,16 @@ const initialNodes = [
     label: 'End Workflow',
     description: 'Complete processing',
   }),
-  // Text node - auto-resizing
+  // Text node - auto-resizing with variable detection
   {
     id: '10',
     type: 'text',
     position: { x: 600, y: 100 },
     data: {
-      text: 'Start typing to see auto-resize...',
+      text: 'Hello {{name}}, your balance is {{amount}}',
       config: {
-        variant: 'info',
-        size: 'medium',
+        variant: 'info' as const,
+        size: 'medium' as const,
         handles: handleConfigs.standard,
       },
     },
@@ -140,7 +140,7 @@ export default function WorkflowEditor() {
             boxShadow: shadows.md,
           }}
           nodeColor={(node) => {
-            const variant = node.data?.config?.variant || 'default'
+            const variant = (node.data?.config?.variant || 'default') as keyof typeof nodeVariants
             return nodeVariants[variant]?.borderColor || colors.gray[300]
           }}
         />

@@ -30,7 +30,7 @@ export const handleConfigs = {
     target: [Position.Top, Position.Left, Position.Right] as Position[],
   },
   multipleOutputs: {
-    source: [Position.Bottom, Position.BottomLeft, Position.BottomRight] as Position[],
+    source: [Position.Bottom, Position.Left, Position.Right] as Position[],
     target: [Position.Top] as Position[],
   },
 } as const
@@ -188,6 +188,7 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
   },
   // Text node - auto-resizing text-based node
   // Note: This uses TextNode component, not BaseNode
+  // Text property is handled by TextNode component, not in defaultData
   text: {
     type: 'text',
     config: {
@@ -198,7 +199,6 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     defaultData: {
       label: 'Text Node',
       description: 'Editable text content',
-      text: '',
     },
   },
 }

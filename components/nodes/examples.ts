@@ -72,7 +72,7 @@ export const splitterNode = createNodeType(
     variant: 'warning',
     size: 'medium',
     handles: {
-      source: [Position.Bottom, Position.BottomLeft, Position.BottomRight],
+      source: [Position.Bottom, Position.Left, Position.Right],
       target: [Position.Top],
     },
     customStyles: {

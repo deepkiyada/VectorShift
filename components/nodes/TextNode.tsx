@@ -37,12 +37,26 @@ const PADDING_X = 16
 const PADDING_Y = 12
 const LINE_HEIGHT = 1.5
 
+// Regex to match {{variableName}} pattern
+// Matches: {{variable}}, {{variable_name}}, {{variableName123}}
+// Does not match nested braces or invalid patterns
+const VARIABLE_REGEX = /\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g
+
+// Extract unique variable names from text
+function extractVariables(text: string): string[] {
+  const matches = Array.from(text.matchAll(VARIABLE_REGEX))
+  const variables = matches.map((match) => match[1])
+  // Return unique variables, preserving order
+  return Array.from(new Set(variables))
+}
+
 export default function TextNode({ data, selected, id }: TextNodeProps) {
   const { setNodes } = useReactFlow()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const [text, setText] = useState(data.text || '')
   const [dimensions, setDimensions] = useState({ width: MIN_WIDTH, height: MIN_HEIGHT })
+  const [detectedVariables, setDetectedVariables] = useState<string[]>([])
 
   const config = data.config || {}
   const {
@@ -128,6 +142,12 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
     return () => cancelAnimationFrame(rafId)
   }, [text, updateDimensions])
 
+  // Detect variables when text changes
+  useEffect(() => {
+    const variables = extractVariables(text)
+    setDetectedVariables(variables)
+  }, [text])
+
   // Update when text changes externally
   useEffect(() => {
     if (data.text !== undefined && data.text !== text) {
@@ -162,13 +182,52 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
     ))
   }
 
+  // Render variable input handles (target handles on the left)
+  const renderVariableHandles = (): React.ReactElement[] => {
+    if (!showHandles || detectedVariables.length === 0) return []
+
+    const handleStyle = {
+      background: variantStyle.borderColor,
+      width: handleStyles.size,
+      height: handleStyles.size,
+      border: handleStyles.border,
+      borderRadius: handleStyles.borderRadius,
+    }
+
+    // Distribute handles vertically on the left side
+    // React Flow handles use percentage-based positioning
+    return detectedVariables.map((variable, index) => {
+      const position = Position.Left
+      // Calculate position as percentage from top (distributed evenly)
+      const topPercent = ((index + 1) / (detectedVariables.length + 1)) * 100
+      
+      return (
+        <Handle
+          key={`variable-${variable}`}
+          id={`variable-${variable}`}
+          type="target"
+          position={position}
+          style={{
+            ...handleStyle,
+            top: `${topPercent}%`,
+          }}
+          data-variable={variable}
+        />
+      )
+    })
+  }
+
   const renderHandles = () => {
     if (!showHandles) return null
 
     const sourceHandles = renderHandleGroup('source', handles.source, Position.Bottom)
-    const targetHandles = renderHandleGroup('target', handles.target, Position.Top)
+    // Only render default target handles if no variables are detected
+    // Variable handles replace default target handles
+    const targetHandles = detectedVariables.length === 0
+      ? renderHandleGroup('target', handles.target, Position.Top)
+      : []
 
-    return [...targetHandles, ...sourceHandles]
+    return [...targetHandles, ...sourceHandles, ...renderVariableHandles()]
   }
 
   const baseStyle: React.CSSProperties = {
@@ -234,9 +293,7 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
         ref={textareaRef}
         value={text}
         onChange={handleTextChange}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        placeholder="Enter text..."
+        placeholder="Enter text... Use {{variable}} syntax for inputs"
         style={textareaStyle}
         rows={1}
       />
