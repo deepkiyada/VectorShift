@@ -8,21 +8,24 @@ import { BaseNodeData } from './BaseNode'
 
 /**
  * Creates React Flow node types from node type definitions
- * This allows us to register node types by configuration
+ * All node types use BaseNode - ensuring consistent structure and styling
+ * This eliminates JSX duplication across all node types
  */
 export function createNodeTypes(): NodeTypes {
   const types: NodeTypes = {}
 
-  // Register all predefined node types
+  // Register all predefined node types - all use BaseNode
   Object.values(nodeTypeDefinitions).forEach((definition) => {
     types[definition.type] = (props) => {
-      // Merge default data with provided data
+      // Merge default data with provided data, ensuring config is included
       const mergedData = {
         ...definition.defaultData,
         ...props.data,
+        // Config must be set for BaseNode to work correctly
         config: definition.config,
       }
 
+      // All nodes render through BaseNode - no duplication
       return <BaseNode {...props} data={mergedData} />
     }
   })

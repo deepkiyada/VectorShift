@@ -90,6 +90,39 @@ const statusStyles = {
   error: { opacity: 1 },
 }
 
+// Shared content styles - extracted to avoid duplication
+const contentStyles = {
+  container: {
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  iconContainer: {
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    marginBottom: '4px',
+  },
+  label: {
+    fontWeight: 600,
+    lineHeight: '1.4' as const,
+  },
+  description: {
+    fontSize: '12px',
+    opacity: 0.7,
+    lineHeight: '1.3' as const,
+  },
+  statusBadge: {
+    fontSize: '10px',
+    marginTop: '4px',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    background: 'rgba(0, 0, 0, 0.05)',
+    display: 'inline-block' as const,
+    textTransform: 'uppercase' as const,
+    fontWeight: 500,
+  },
+}
+
 export default function BaseNode({ data, selected }: BaseNodeProps) {
   const config = data.config || {}
   const {
@@ -119,78 +152,38 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
     position: 'relative',
   }
 
+  // Helper to render handles of a specific type
+  const renderHandleGroup = (
+    handleType: 'source' | 'target',
+    handleConfig: boolean | Position[] | undefined,
+    defaultPosition: Position
+  ): ReactNode[] => {
+    if (!handleConfig) return []
+
+    const positions = Array.isArray(handleConfig) ? handleConfig : [defaultPosition]
+    const handleStyle = {
+      background: variantStyle.border,
+      width: '8px',
+      height: '8px',
+    }
+
+    return positions.map((position) => (
+      <Handle
+        key={`${handleType}-${position}`}
+        type={handleType}
+        position={position}
+        style={handleStyle}
+      />
+    ))
+  }
+
   const renderHandles = () => {
     if (!showHandles) return null
 
-    const handleElements: ReactNode[] = []
+    const sourceHandles = renderHandleGroup('source', handles.source, Position.Bottom)
+    const targetHandles = renderHandleGroup('target', handles.target, Position.Top)
 
-    // Source handles
-    if (handles.source) {
-      if (Array.isArray(handles.source)) {
-        handles.source.forEach((position) => {
-          handleElements.push(
-            <Handle
-              key={`source-${position}`}
-              type="source"
-              position={position}
-              style={{
-                background: variantStyle.border,
-                width: '8px',
-                height: '8px',
-              }}
-            />
-          )
-        })
-      } else {
-        handleElements.push(
-          <Handle
-            key="source"
-            type="source"
-            position={Position.Bottom}
-            style={{
-              background: variantStyle.border,
-              width: '8px',
-              height: '8px',
-            }}
-          />
-        )
-      }
-    }
-
-    // Target handles
-    if (handles.target) {
-      if (Array.isArray(handles.target)) {
-        handles.target.forEach((position) => {
-          handleElements.push(
-            <Handle
-              key={`target-${position}`}
-              type="target"
-              position={position}
-              style={{
-                background: variantStyle.border,
-                width: '8px',
-                height: '8px',
-              }}
-            />
-          )
-        })
-      } else {
-        handleElements.push(
-          <Handle
-            key="target"
-            type="target"
-            position={Position.Top}
-            style={{
-              background: variantStyle.border,
-              width: '8px',
-              height: '8px',
-            }}
-          />
-        )
-      }
-    }
-
-    return handleElements
+    return [...targetHandles, ...sourceHandles]
   }
 
   const renderContent = () => {
@@ -198,49 +191,22 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
       return customContent(data)
     }
 
+    // Standard content rendering - all nodes share this structure
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={contentStyles.container}>
         {data.icon && (
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-            {data.icon}
-          </div>
+          <div style={contentStyles.iconContainer}>{data.icon}</div>
         )}
-        <div
-          style={{
-            fontWeight: 600,
-            lineHeight: '1.4',
-            color: variantStyle.color,
-          }}
-        >
+        <div style={{ ...contentStyles.label, color: variantStyle.color }}>
           {data.label}
         </div>
         {data.description && (
-          <div
-            style={{
-              fontSize: '12px',
-              color: variantStyle.color,
-              opacity: 0.7,
-              lineHeight: '1.3',
-            }}
-          >
+          <div style={{ ...contentStyles.description, color: variantStyle.color }}>
             {data.description}
           </div>
         )}
         {data.status && data.status !== 'idle' && (
-          <div
-            style={{
-              fontSize: '10px',
-              marginTop: '4px',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              background: 'rgba(0, 0, 0, 0.05)',
-              display: 'inline-block',
-              textTransform: 'uppercase',
-              fontWeight: 500,
-            }}
-          >
-            {data.status}
-          </div>
+          <div style={contentStyles.statusBadge}>{data.status}</div>
         )}
       </div>
     )

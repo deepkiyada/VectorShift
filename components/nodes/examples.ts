@@ -1,6 +1,7 @@
 /**
  * Examples demonstrating how to easily add new node types
- * These examples show the power of the configuration-based approach
+ * All examples use BaseNode through configuration - no JSX duplication
+ * This shows the power of the configuration-based approach
  */
 
 import { createNodeType, registerNodeType } from './nodeTypes'

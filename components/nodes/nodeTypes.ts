@@ -7,18 +7,35 @@ export interface NodeTypeDefinition {
   defaultData?: Partial<BaseNodeData>
 }
 
+// Common handle configurations
+const handleConfigs = {
+  input: {
+    source: [Position.Bottom] as Position[],
+    target: false,
+  },
+  output: {
+    source: false,
+    target: [Position.Top] as Position[],
+  },
+  standard: {
+    source: [Position.Bottom] as Position[],
+    target: [Position.Top] as Position[],
+  },
+  decision: {
+    source: [Position.Bottom, Position.Right] as Position[],
+    target: [Position.Top] as Position[],
+  },
+} as const
+
 // Predefined node type configurations
+// All nodes use BaseNode through the registry - no JSX duplication
 export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
   start: {
     type: 'start',
     config: {
       variant: 'success',
       size: 'medium',
-      showHandles: true,
-      handles: {
-        source: [Position.Bottom],
-        target: false,
-      },
+      handles: handleConfigs.input,
     },
     defaultData: {
       label: 'Start',
@@ -30,11 +47,7 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     config: {
       variant: 'error',
       size: 'medium',
-      showHandles: true,
-      handles: {
-        source: false,
-        target: [Position.Top],
-      },
+      handles: handleConfigs.output,
     },
     defaultData: {
       label: 'End',
@@ -46,11 +59,7 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     config: {
       variant: 'primary',
       size: 'medium',
-      showHandles: true,
-      handles: {
-        source: [Position.Bottom],
-        target: [Position.Top],
-      },
+      handles: handleConfigs.standard,
     },
     defaultData: {
       label: 'Process',
@@ -62,11 +71,7 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     config: {
       variant: 'warning',
       size: 'medium',
-      showHandles: true,
-      handles: {
-        source: [Position.Bottom, Position.Right],
-        target: [Position.Top],
-      },
+      handles: handleConfigs.decision,
       customStyles: {
         borderRadius: '50%',
         minWidth: '120px',
@@ -86,11 +91,7 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     config: {
       variant: 'info',
       size: 'medium',
-      showHandles: true,
-      handles: {
-        source: [Position.Bottom],
-        target: [Position.Top],
-      },
+      handles: handleConfigs.standard,
     },
     defaultData: {
       label: 'Action',
