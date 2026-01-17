@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { NodeTypes } from 'reactflow'
 import BaseNode from './BaseNode'
+import TextNode from './TextNode'
 import { nodeTypeDefinitions } from './nodeTypes'
 import { BaseNodeData } from './BaseNode'
 
@@ -10,6 +11,7 @@ import { BaseNodeData } from './BaseNode'
  * Creates React Flow node types from node type definitions
  * All node types use BaseNode - ensuring consistent structure and styling
  * This eliminates JSX duplication across all node types
+ * Special node types (like TextNode) are registered separately
  */
 export function createNodeTypes(): NodeTypes {
   const types: NodeTypes = {}
@@ -29,6 +31,9 @@ export function createNodeTypes(): NodeTypes {
       return <BaseNode {...props} data={mergedData} />
     }
   })
+
+  // Register special node types
+  types.text = TextNode
 
   return types
 }

@@ -23,6 +23,7 @@ import {
   borderRadius,
   nodeVariants,
 } from './nodes/designSystem'
+import { handleConfigs } from './nodes/nodeTypes'
 
 // Example: Creating nodes using the configuration-based system
 // Demonstrates both original and new node types
@@ -64,6 +65,20 @@ const initialNodes = [
     label: 'End Workflow',
     description: 'Complete processing',
   }),
+  // Text node - auto-resizing
+  {
+    id: '10',
+    type: 'text',
+    position: { x: 600, y: 100 },
+    data: {
+      text: 'Start typing to see auto-resize...',
+      config: {
+        variant: 'info',
+        size: 'medium',
+        handles: handleConfigs.standard,
+      },
+    },
+  },
 ]
 
 const initialEdges: Edge[] = [

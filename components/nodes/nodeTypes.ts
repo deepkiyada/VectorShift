@@ -8,7 +8,7 @@ export interface NodeTypeDefinition {
 }
 
 // Common handle configurations
-const handleConfigs = {
+export const handleConfigs = {
   input: {
     source: [Position.Bottom] as Position[],
     target: false,
@@ -184,6 +184,21 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     defaultData: {
       label: 'Delay',
       description: 'Wait or pause',
+    },
+  },
+  // Text node - auto-resizing text-based node
+  // Note: This uses TextNode component, not BaseNode
+  text: {
+    type: 'text',
+    config: {
+      variant: 'default',
+      size: 'medium',
+      handles: handleConfigs.standard,
+    },
+    defaultData: {
+      label: 'Text Node',
+      description: 'Editable text content',
+      text: '',
     },
   },
 }
