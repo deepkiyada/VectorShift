@@ -2,6 +2,14 @@
 
 import { ReactNode, CSSProperties, useEffect } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
+import {
+  nodeVariants,
+  nodeSizes,
+  shadows,
+  borderRadius,
+  handleStyles,
+  contentStyles as designContentStyles,
+} from './designSystem'
 
 export interface BaseNodeData {
   label: string
@@ -29,57 +37,6 @@ export interface BaseNodeProps extends NodeProps {
   }
 }
 
-const variantStyles = {
-  default: {
-    border: '1px solid #e5e7eb',
-    background: '#ffffff',
-    color: '#1f2937',
-  },
-  primary: {
-    border: '1px solid #3b82f6',
-    background: '#eff6ff',
-    color: '#1e40af',
-  },
-  success: {
-    border: '1px solid #10b981',
-    background: '#ecfdf5',
-    color: '#065f46',
-  },
-  warning: {
-    border: '1px solid #f59e0b',
-    background: '#fffbeb',
-    color: '#92400e',
-  },
-  error: {
-    border: '1px solid #ef4444',
-    background: '#fef2f2',
-    color: '#991b1b',
-  },
-  info: {
-    border: '1px solid #06b6d4',
-    background: '#ecfeff',
-    color: '#164e63',
-  },
-}
-
-const sizeStyles = {
-  small: {
-    minWidth: '120px',
-    padding: '8px 12px',
-    fontSize: '12px',
-  },
-  medium: {
-    minWidth: '160px',
-    padding: '12px 16px',
-    fontSize: '14px',
-  },
-  large: {
-    minWidth: '200px',
-    padding: '16px 20px',
-    fontSize: '16px',
-  },
-}
-
 const statusStyles = {
   idle: { opacity: 1 },
   running: {
@@ -88,39 +45,6 @@ const statusStyles = {
   },
   success: { opacity: 1 },
   error: { opacity: 1 },
-}
-
-// Shared content styles - extracted to avoid duplication
-const contentStyles = {
-  container: {
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  iconContainer: {
-    display: 'flex' as const,
-    alignItems: 'center' as const,
-    marginBottom: '4px',
-  },
-  label: {
-    fontWeight: 600,
-    lineHeight: '1.4' as const,
-  },
-  description: {
-    fontSize: '12px',
-    opacity: 0.7,
-    lineHeight: '1.3' as const,
-  },
-  statusBadge: {
-    fontSize: '10px',
-    marginTop: '4px',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    background: 'rgba(0, 0, 0, 0.05)',
-    display: 'inline-block' as const,
-    textTransform: 'uppercase' as const,
-    fontWeight: 500,
-  },
 }
 
 export default function BaseNode({ data, selected }: BaseNodeProps) {
@@ -134,8 +58,8 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
     customContent,
   } = config
 
-  const variantStyle = variantStyles[variant]
-  const sizeStyle = sizeStyles[size]
+  const variantStyle = nodeVariants[variant]
+  const sizeStyle = nodeSizes[size]
   const statusStyle = statusStyles[data.status || 'idle']
 
   const baseStyle: CSSProperties = {
@@ -143,13 +67,12 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
     ...sizeStyle,
     ...statusStyle,
     ...customStyles,
-    borderRadius: '8px',
-    boxShadow: selected
-      ? '0 0 0 2px #3b82f6, 0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-      : '0 1px 3px rgba(0, 0, 0, 0.1)',
-    transition: 'all 0.2s ease-in-out',
+    borderRadius: borderRadius.md,
+    boxShadow: selected ? shadows.selected : shadows.md,
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
     cursor: 'pointer',
     position: 'relative',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   }
 
   // Helper to render handles of a specific type
@@ -162,9 +85,11 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
 
     const positions = Array.isArray(handleConfig) ? handleConfig : [defaultPosition]
     const handleStyle = {
-      background: variantStyle.border,
-      width: '8px',
-      height: '8px',
+      background: variantStyle.borderColor,
+      width: handleStyles.size,
+      height: handleStyles.size,
+      border: handleStyles.border,
+      borderRadius: handleStyles.borderRadius,
     }
 
     return positions.map((position) => (
@@ -193,20 +118,20 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
 
     // Standard content rendering - all nodes share this structure
     return (
-      <div style={contentStyles.container}>
+      <div style={designContentStyles.container}>
         {data.icon && (
-          <div style={contentStyles.iconContainer}>{data.icon}</div>
+          <div style={designContentStyles.iconContainer}>{data.icon}</div>
         )}
-        <div style={{ ...contentStyles.label, color: variantStyle.color }}>
+        <div style={{ ...designContentStyles.label, color: variantStyle.color }}>
           {data.label}
         </div>
         {data.description && (
-          <div style={{ ...contentStyles.description, color: variantStyle.color }}>
+          <div style={{ ...designContentStyles.description, color: variantStyle.color }}>
             {data.description}
           </div>
         )}
         {data.status && data.status !== 'idle' && (
-          <div style={contentStyles.statusBadge}>{data.status}</div>
+          <div style={designContentStyles.statusBadge}>{data.status}</div>
         )}
       </div>
     )

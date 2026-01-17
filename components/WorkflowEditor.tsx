@@ -15,6 +15,14 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useNodeTypes, createNodeFromType } from './nodes'
+import {
+  colors,
+  shadows,
+  spacing,
+  typography,
+  borderRadius,
+  nodeVariants,
+} from './nodes/designSystem'
 
 // Example: Creating nodes using the configuration-based system
 // Demonstrates both original and new node types
@@ -83,7 +91,14 @@ export default function WorkflowEditor() {
   const nodeTypes = useNodeTypes()
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div
+      style={{
+        width: '100vw',
+        height: '100vh',
+        background: colors.gray[50],
+        fontFamily: typography.fontFamily.sans,
+      }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -92,25 +107,67 @@ export default function WorkflowEditor() {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
+        style={{ background: colors.gray[50] }}
       >
-        <Controls />
-        <MiniMap />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        <Panel 
-          position="top-left" 
+        <Controls
           style={{
-            background: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '8px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            padding: '12px 16px',
-            maxWidth: '300px',
+            background: 'white',
+            border: `1px solid ${colors.gray[200]}`,
+            borderRadius: borderRadius.md,
+            boxShadow: shadows.md,
+          }}
+        />
+        <MiniMap
+          style={{
+            background: 'white',
+            border: `1px solid ${colors.gray[200]}`,
+            borderRadius: borderRadius.md,
+            boxShadow: shadows.md,
+          }}
+          nodeColor={(node) => {
+            const variant = node.data?.config?.variant || 'default'
+            return nodeVariants[variant]?.borderColor || colors.gray[300]
+          }}
+        />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={16}
+          size={1}
+          color={colors.gray[300]}
+        />
+        <Panel
+          position="top-left"
+          style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: borderRadius.lg,
+            boxShadow: shadows.lg,
+            padding: `${spacing.lg} ${spacing.xl}`,
+            maxWidth: '320px',
+            border: `1px solid ${colors.gray[200]}`,
           }}
         >
-          <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#1f2937', margin: 0 }}>
+          <h1
+            style={{
+              fontSize: typography.fontSize['2xl'],
+              fontWeight: typography.fontWeight.semibold,
+              color: colors.gray[900],
+              margin: 0,
+              marginBottom: spacing.xs,
+              lineHeight: typography.lineHeight.tight,
+              letterSpacing: '-0.02em',
+            }}
+          >
             Workflow Editor
           </h1>
-          <p style={{ fontSize: '14px', color: '#4b5563', marginTop: '4px', margin: 0 }}>
+          <p
+            style={{
+              fontSize: typography.fontSize.sm,
+              color: colors.gray[600],
+              margin: 0,
+              lineHeight: typography.lineHeight.normal,
+            }}
+          >
             Drag nodes and connect them to build your workflow
           </p>
         </Panel>
