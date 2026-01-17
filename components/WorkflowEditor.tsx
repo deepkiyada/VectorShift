@@ -17,24 +17,42 @@ import 'reactflow/dist/style.css'
 import { useNodeTypes, createNodeFromType } from './nodes'
 
 // Example: Creating nodes using the configuration-based system
+// Demonstrates both original and new node types
 const initialNodes = [
-  createNodeFromType('start', '1', { x: 250, y: 100 }, {
+  // Original node types
+  createNodeFromType('start', '1', { x: 100, y: 100 }, {
     label: 'Start Workflow',
     description: 'Begin processing',
   }),
-  createNodeFromType('process', '2', { x: 250, y: 200 }, {
-    label: 'Data Processing',
-    description: 'Transform and validate data',
+  createNodeFromType('dataSource', '2', { x: 100, y: 200 }, {
+    label: 'External API',
+    description: 'Fetch data from API',
   }),
-  createNodeFromType('decision', '3', { x: 450, y: 200 }, {
+  createNodeFromType('transformer', '3', { x: 100, y: 300 }, {
+    label: 'Data Transformer',
+    description: 'Transform data format',
+  }),
+  createNodeFromType('validator', '4', { x: 100, y: 400 }, {
+    label: 'Validate Input',
+    description: 'Check data validity',
+  }),
+  createNodeFromType('decision', '5', { x: 300, y: 300 }, {
     label: 'Check Condition',
     description: 'Evaluate result',
   }),
-  createNodeFromType('action', '4', { x: 250, y: 350 }, {
+  createNodeFromType('merge', '6', { x: 300, y: 450 }, {
+    label: 'Merge Data',
+    description: 'Combine multiple sources',
+  }),
+  createNodeFromType('delay', '7', { x: 500, y: 300 }, {
+    label: 'Wait 5s',
+    description: 'Pause execution',
+  }),
+  createNodeFromType('action', '8', { x: 500, y: 450 }, {
     label: 'Execute Action',
     description: 'Perform operation',
   }),
-  createNodeFromType('end', '5', { x: 250, y: 500 }, {
+  createNodeFromType('end', '9', { x: 300, y: 600 }, {
     label: 'End Workflow',
     description: 'Complete processing',
   }),
@@ -45,6 +63,11 @@ const initialEdges: Edge[] = [
   { id: 'e2-3', source: '2', target: '3' },
   { id: 'e3-4', source: '3', target: '4' },
   { id: 'e4-5', source: '4', target: '5' },
+  { id: 'e5-6', source: '5', target: '6' },
+  { id: 'e5-7', source: '5', target: '7' },
+  { id: 'e6-8', source: '6', target: '8' },
+  { id: 'e7-8', source: '7', target: '8' },
+  { id: 'e8-9', source: '8', target: '9' },
 ]
 
 export default function WorkflowEditor() {

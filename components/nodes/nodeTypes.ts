@@ -25,6 +25,14 @@ const handleConfigs = {
     source: [Position.Bottom, Position.Right] as Position[],
     target: [Position.Top] as Position[],
   },
+  multipleInputs: {
+    source: [Position.Bottom] as Position[],
+    target: [Position.Top, Position.Left, Position.Right] as Position[],
+  },
+  multipleOutputs: {
+    source: [Position.Bottom, Position.BottomLeft, Position.BottomRight] as Position[],
+    target: [Position.Top] as Position[],
+  },
 } as const
 
 // Predefined node type configurations
@@ -96,6 +104,86 @@ export const nodeTypeDefinitions: Record<string, NodeTypeDefinition> = {
     defaultData: {
       label: 'Action',
       description: 'Execute action',
+    },
+  },
+  // Additional node types demonstrating extensibility
+  dataSource: {
+    type: 'dataSource',
+    config: {
+      variant: 'primary',
+      size: 'large',
+      handles: handleConfigs.input,
+      customStyles: {
+        borderLeft: '4px solid #3b82f6',
+      },
+    },
+    defaultData: {
+      label: 'Data Source',
+      description: 'External data input',
+    },
+  },
+  transformer: {
+    type: 'transformer',
+    config: {
+      variant: 'default',
+      size: 'medium',
+      handles: handleConfigs.standard,
+      customStyles: {
+        borderTop: '3px solid #6366f1',
+        background: 'linear-gradient(to bottom, #f8fafc, #ffffff)',
+      },
+    },
+    defaultData: {
+      label: 'Transformer',
+      description: 'Transform data format',
+    },
+  },
+  validator: {
+    type: 'validator',
+    config: {
+      variant: 'warning',
+      size: 'small',
+      handles: handleConfigs.standard,
+      customStyles: {
+        borderRadius: '12px',
+        fontWeight: 600,
+      },
+    },
+    defaultData: {
+      label: 'Validator',
+      description: 'Validate data',
+    },
+  },
+  merge: {
+    type: 'merge',
+    config: {
+      variant: 'info',
+      size: 'medium',
+      handles: handleConfigs.multipleInputs,
+      customStyles: {
+        borderTop: '2px dashed #06b6d4',
+      },
+    },
+    defaultData: {
+      label: 'Merge',
+      description: 'Combine multiple inputs',
+    },
+  },
+  delay: {
+    type: 'delay',
+    config: {
+      variant: 'default',
+      size: 'small',
+      handles: handleConfigs.standard,
+      customStyles: {
+        border: '2px dashed #9ca3af',
+        background: '#f9fafb',
+        fontStyle: 'italic',
+      },
+    },
+    defaultData: {
+      label: 'Delay',
+      description: 'Wait or pause',
     },
   },
 }
