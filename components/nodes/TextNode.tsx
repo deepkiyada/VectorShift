@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Handle, Position, NodeProps, useReactFlow } from 'reactflow'
 import {
   nodeVariants,
-  nodeSizes,
   shadows,
   borderRadius,
   handleStyles,
@@ -61,13 +60,11 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
   const config = data.config || {}
   const {
     variant = 'default',
-    size = 'medium',
     showHandles = true,
     handles = { source: true, target: true },
   } = config
 
   const variantStyle = nodeVariants[variant]
-  const sizeStyle = nodeSizes[size]
 
   // Calculate dimensions based on text content
   const calculateDimensions = useCallback(() => {

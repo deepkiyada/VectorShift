@@ -5,7 +5,7 @@ import { NodeTypes } from 'reactflow'
 import BaseNode from './BaseNode'
 import TextNode from './TextNode'
 import { nodeTypeDefinitions } from './nodeTypes'
-import { BaseNodeData } from './BaseNode'
+import type { BaseNodeData } from './BaseNode'
 
 /**
  * Creates React Flow node types from node type definitions

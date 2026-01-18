@@ -34,10 +34,11 @@ import WorkflowStatisticsAlert, {
   type GraphAnalysisData,
 } from './WorkflowStatisticsAlert'
 
-// Example: Creating nodes using the configuration-based system
-// Demonstrates both original and new node types
+/**
+ * Initial workflow nodes - demonstrates configuration-based node creation
+ * All nodes except text node use createNodeFromType for consistency
+ */
 const initialNodes = [
-  // Original node types
   createNodeFromType('start', '1', { x: 100, y: 100 }, {
     label: 'Start Workflow',
     description: 'Begin processing',
@@ -75,6 +76,7 @@ const initialNodes = [
     description: 'Complete processing',
   }),
   // Text node - auto-resizing with variable detection
+  // Created manually as it requires special handling
   {
     id: '10',
     type: 'text',
@@ -127,6 +129,7 @@ export default function WorkflowEditor() {
   const handleAnalyze = useCallback(async () => {
     setIsAnalyzing(true)
     setAnalysisResult(null)
+    setSubmitResult(null) // Clear any previous submit results
 
     try {
       const payload = buildWorkflowPayload(nodes, edges)
@@ -139,7 +142,8 @@ export default function WorkflowEditor() {
       })
 
       if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error?.message || `Analysis failed: ${response.statusText}`)
       }
 
       const data = await response.json()
