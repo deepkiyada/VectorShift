@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from typing import Dict
 
+from models import HealthCheckResponse
+
 app = FastAPI(
     title="VectorShift Workflow API",
     description="Backend API for the VectorShift workflow editor",
@@ -25,28 +27,28 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def health_check() -> Dict[str, str]:
+@app.get("/", response_model=HealthCheckResponse)
+async def health_check() -> HealthCheckResponse:
     """
     Health check endpoint.
     
     Returns:
-        Dict with status and timestamp confirming the server is running.
+        HealthCheckResponse with status and timestamp confirming the server is running.
     """
-    return {
-        "status": "healthy",
-        "service": "vectorshift-workflow-api",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
+    return HealthCheckResponse(
+        status="healthy",
+        service="vectorshift-workflow-api",
+        timestamp=datetime.utcnow().isoformat() + "Z",
+    )
 
 
-@app.get("/health")
-async def health() -> Dict[str, str]:
+@app.get("/health", response_model=HealthCheckResponse)
+async def health() -> HealthCheckResponse:
     """
     Alternative health check endpoint (common convention).
     
     Returns:
-        Dict with status and timestamp confirming the server is running.
+        HealthCheckResponse with status and timestamp confirming the server is running.
     """
     return await health_check()
 
