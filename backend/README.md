@@ -143,11 +143,34 @@ FastAPI automatically generates interactive API documentation:
 
 ## CORS Configuration
 
-The backend is configured to accept requests from:
-- `http://localhost:3000` (Next.js dev server)
-- `http://127.0.0.1:3000`
+The backend is configured with minimal and secure CORS settings by default.
 
-To add additional origins, modify the `allow_origins` list in `main.py`.
+### Local Development
+
+Automatically allows requests from:
+- `http://localhost:3000` (Next.js default dev port)
+- `http://127.0.0.1:3000` (Alternative localhost format)
+
+### Production
+
+To add additional allowed origins in production, set the `CORS_ALLOWED_ORIGINS` environment variable:
+
+```bash
+# Single origin
+export CORS_ALLOWED_ORIGINS="https://your-domain.com"
+
+# Multiple origins (comma-separated)
+export CORS_ALLOWED_ORIGINS="https://app.example.com,https://admin.example.com"
+```
+
+### Security Settings
+
+- **Allowed Methods**: `GET`, `POST`, `OPTIONS` only
+- **Allowed Headers**: `Content-Type`, `Authorization` only
+- **Credentials**: Enabled (for cookie-based auth if needed)
+- **Max Age**: 600 seconds (10 minutes) for preflight cache
+
+These settings prioritize security by default while allowing necessary functionality for local development.
 
 ## Development
 
