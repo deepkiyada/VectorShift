@@ -30,6 +30,9 @@ import {
   validateWorkflowPayload,
   type WorkflowApiResponse,
 } from '@/lib/api'
+import WorkflowStatisticsAlert, {
+  type GraphAnalysisData,
+} from './WorkflowStatisticsAlert'
 
 // Example: Creating nodes using the configuration-based system
 // Demonstrates both original and new node types
@@ -77,6 +80,7 @@ const initialNodes = [
     type: 'text',
     position: { x: 600, y: 100 },
     data: {
+      label: 'Text Node',
       text: 'Hello {{name}}, your balance is {{amount}}',
       config: {
         variant: 'info' as const,
@@ -103,11 +107,13 @@ export default function WorkflowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [submitResult, setSubmitResult] = useState<{
     success: boolean
     message?: string
     error?: string
   } | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<GraphAnalysisData | null>(null)
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -116,6 +122,41 @@ export default function WorkflowEditor() {
 
   // Get node types from the registry
   const nodeTypes = useNodeTypes()
+
+  // Handle workflow analysis
+  const handleAnalyze = useCallback(async () => {
+    setIsAnalyzing(true)
+    setAnalysisResult(null)
+
+    try {
+      const payload = buildWorkflowPayload(nodes, edges)
+      const response = await fetch('/api/workflows/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      if (data.success && data.data?.analysis) {
+        setAnalysisResult(data.data.analysis)
+      } else {
+        throw new Error(data.error?.message || 'Failed to analyze workflow')
+      }
+    } catch (error) {
+      setSubmitResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to analyze workflow',
+      })
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [nodes, edges])
 
   // Handle workflow submission
   const handleSubmit = useCallback(async () => {
@@ -245,9 +286,45 @@ export default function WorkflowEditor() {
           >
             Drag nodes and connect them to build your workflow
           </p>
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
+          <div
+            style={{
+              display: 'flex',
+              gap: spacing.sm,
+              flexDirection: 'column',
+            }}
+          >
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              style={{
+                width: '100%',
+                padding: `${spacing.sm} ${spacing.md}`,
+                background: isAnalyzing ? colors.gray[400] : colors.info[600],
+                color: 'white',
+                border: 'none',
+                borderRadius: borderRadius.md,
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.semibold,
+                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                opacity: isAnalyzing ? 0.7 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!isAnalyzing) {
+                  e.currentTarget.style.background = colors.info[700]
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isAnalyzing) {
+                  e.currentTarget.style.background = colors.info[600]
+                }
+              }}
+            >
+              {isAnalyzing ? 'Analyzing...' : 'Analyze Workflow'}
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
             style={{
               width: '100%',
               padding: `${spacing.sm} ${spacing.md}`,
@@ -274,6 +351,7 @@ export default function WorkflowEditor() {
           >
             {isSubmitting ? 'Submitting...' : 'Submit Workflow'}
           </button>
+          </div>
           {submitResult && (
             <div
               style={{
@@ -301,6 +379,22 @@ export default function WorkflowEditor() {
             </div>
           )}
         </Panel>
+
+        {/* Workflow Statistics Alert */}
+        {analysisResult && (
+          <Panel
+            position="top-right"
+            style={{
+              maxWidth: '520px',
+              zIndex: 1000,
+            }}
+          >
+            <WorkflowStatisticsAlert
+              analysis={analysisResult}
+              onClose={() => setAnalysisResult(null)}
+            />
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   )
