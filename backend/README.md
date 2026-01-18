@@ -117,6 +117,12 @@ Accepts a workflow pipeline definition and returns a confirmation with node/edge
 }
 ```
 
+**Notes:**
+- Node count includes only valid nodes (with `id`, `position`, and `data` fields)
+- Edge count includes only valid edges (with `id`, `source`, and `target` fields)
+- Counts are calculated accurately regardless of node/edge content or structure
+- Empty pipelines return 0 for both counts
+
 ## API Documentation
 
 FastAPI automatically generates interactive API documentation:

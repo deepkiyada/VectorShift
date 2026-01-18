@@ -59,7 +59,8 @@ async def parse_pipeline(pipeline: WorkflowPipeline) -> WorkflowResponse:
     Parse a workflow pipeline definition.
     
     Accepts a complete workflow pipeline with nodes and edges,
-    validates the structure, and returns a confirmation response.
+    validates the structure, and returns a confirmation response with
+    accurate node and edge counts.
     
     Args:
         pipeline: WorkflowPipeline definition containing nodes and edges
@@ -67,9 +68,29 @@ async def parse_pipeline(pipeline: WorkflowPipeline) -> WorkflowResponse:
     Returns:
         WorkflowResponse confirming receipt with node and edge counts
     """
-    node_count = len(pipeline.nodes) if pipeline.nodes else 0
-    edge_count = len(pipeline.edges) if pipeline.edges else 0
-    
+    # Calculate node count - handle None and filter invalid entries
+    # Pydantic validates structure, but we ensure counts are accurate regardless of content
+    if pipeline.nodes is None:
+        node_count = 0
+    else:
+        # Count valid nodes (exclude None entries and ensure required fields have values)
+        node_count = sum(
+            1
+            for node in pipeline.nodes
+            if node is not None and node.id and node.position and node.data
+        )
+
+    # Calculate edge count - handle None and filter invalid entries
+    if pipeline.edges is None:
+        edge_count = 0
+    else:
+        # Count valid edges (exclude None entries and ensure required fields have values)
+        edge_count = sum(
+            1
+            for edge in pipeline.edges
+            if edge is not None and edge.id and edge.source and edge.target
+        )
+
     return WorkflowResponse(
         success=True,
         message=f"Pipeline received successfully: {node_count} node(s), {edge_count} edge(s)",
