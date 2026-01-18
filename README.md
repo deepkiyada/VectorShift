@@ -4,12 +4,33 @@ A Next.js-based visual workflow editor built on React Flow, featuring a configur
 
 ## Quick Start
 
+### Frontend
+
 ```bash
 npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). Production build: `npm run build && npm start`
+
+### Backend
+
+```bash
+cd backend
+pip3 install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+# Backend API URL (default: http://localhost:8000)
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+```
+
+The frontend will automatically connect to the backend at this URL when submitting workflows.
 
 ## Architecture Overview
 

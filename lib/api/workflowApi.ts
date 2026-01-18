@@ -9,6 +9,7 @@ import { TextNodeData } from '@/components/nodes/TextNode'
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/workflows'
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
 
 /**
  * Normalized node data for API submission
@@ -238,6 +239,95 @@ export async function submitWorkflow(
       data: {
         workflowId: data.workflowId || data.id,
         message: data.message || 'Workflow submitted successfully',
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: error instanceof Error ? error.message : 'Network error occurred',
+        details: error,
+      },
+    }
+  }
+}
+
+/**
+ * Parse pipeline using backend API
+ * Returns pipeline statistics including node count, edge count, and DAG validity
+ */
+export async function parsePipeline(
+  payload: WorkflowPayload,
+  options?: {
+    endpoint?: string
+    headers?: Record<string, string>
+  }
+): Promise<{
+  success: boolean
+  data?: {
+    nodeCount: number
+    edgeCount: number
+    isDAG: boolean
+    hasCycles: boolean
+    version?: string
+    parsedAt?: string
+  }
+  error?: {
+    code: string
+    message: string
+    details?: any
+  }
+}> {
+  const endpoint = options?.endpoint || `${BACKEND_API_URL}/pipelines/parse`
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: `HTTP ${response.status}: ${response.statusText}`,
+      }))
+
+      return {
+        success: false,
+        error: {
+          code: `HTTP_${response.status}`,
+          message: errorData.error?.message || errorData.message || 'Failed to parse pipeline',
+          details: errorData,
+        },
+      }
+    }
+
+    const data = await response.json()
+
+    if (data.success && data.data) {
+      return {
+        success: true,
+        data: {
+          nodeCount: data.data.nodeCount || 0,
+          edgeCount: data.data.edgeCount || 0,
+          isDAG: data.data.isDAG ?? true,
+          hasCycles: data.data.hasCycles ?? false,
+          version: data.data.version,
+          parsedAt: data.data.parsedAt,
+        },
+      }
+    }
+
+    return {
+      success: false,
+      error: {
+        code: 'INVALID_RESPONSE',
+        message: 'Invalid response format from backend',
+        details: data,
       },
     }
   } catch (error) {

@@ -26,9 +26,8 @@ import {
 import { handleConfigs } from './nodes/nodeTypes'
 import {
   buildWorkflowPayload,
-  submitWorkflow,
+  parsePipeline,
   validateWorkflowPayload,
-  type WorkflowApiResponse,
 } from '@/lib/api'
 import WorkflowStatisticsAlert, {
   type GraphAnalysisData,
@@ -199,7 +198,7 @@ export default function WorkflowEditor() {
     }
   }, [nodes, edges])
 
-  // Handle workflow submission
+  // Handle workflow submission (parse pipeline via backend)
   const handleSubmit = useCallback(async () => {
     // Guard: Ensure we have nodes to submit
     if (!nodes || nodes.length === 0) {
@@ -212,6 +211,7 @@ export default function WorkflowEditor() {
 
     setIsSubmitting(true)
     setSubmitResult(null)
+    setAnalysisResult(null) // Clear any previous analysis
 
     try {
       // Build payload from current nodes and edges
@@ -231,18 +231,27 @@ export default function WorkflowEditor() {
         return
       }
 
-      // Submit to API
-      const response: WorkflowApiResponse = await submitWorkflow(payload)
+      // Parse pipeline via backend API
+      const response = await parsePipeline(payload)
 
-      if (response.success) {
+      if (response.success && response.data) {
+        // Display statistics in alert
+        setAnalysisResult({
+          nodeCount: response.data.nodeCount,
+          edgeCount: response.data.edgeCount,
+          isDAG: response.data.isDAG,
+          hasCycles: response.data.hasCycles,
+        })
+
+        // Also show success message
         setSubmitResult({
           success: true,
-          message: response.data?.message || 'Workflow submitted successfully',
+          message: `Pipeline parsed successfully: ${response.data.nodeCount} node(s), ${response.data.edgeCount} edge(s), ${response.data.isDAG ? 'valid DAG' : 'contains cycles'}`,
         })
       } else {
         setSubmitResult({
           success: false,
-          error: response.error?.message || 'Failed to submit workflow',
+          error: response.error?.message || 'Failed to parse pipeline',
         })
       }
     } catch (error) {
