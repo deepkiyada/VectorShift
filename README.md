@@ -1,6 +1,8 @@
 # VectorShift Workflow Editor
 
-A Next.js-based visual workflow editor built on React Flow, featuring a configuration-driven node system that enables rapid extensibility with minimal code duplication.
+A full-stack visual workflow editor application featuring a Next.js frontend with React Flow and a FastAPI backend for pipeline validation. The system uses a configuration-driven node abstraction that enables rapid extensibility with minimal code duplication.
+
+**Technology Stack:** Next.js 14 + React Flow 11 (Frontend) | FastAPI + Python (Backend) | TypeScript + Pydantic (Type Safety)
 
 ## 🚀 Getting Started
 
@@ -234,6 +236,44 @@ const node = createNodeFromType('dataSource', 'node-1', { x: 100, y: 100 })
         └── analyzer.ts          # Graph algorithms (DAG, cycles, etc.)
 ```
 
+## Backend API
+
+FastAPI backend for workflow pipeline validation and DAG detection. See [`backend/README.md`](./backend/README.md) for complete documentation.
+
+### Overview
+
+The backend exposes a single POST endpoint `/pipelines/parse` that:
+- Accepts workflow pipeline definitions (nodes and edges)
+- Counts valid nodes and edges
+- Determines if the graph is a Directed Acyclic Graph (DAG)
+- Returns statistics matching the frontend contract
+
+### Key Features
+
+- **DAG Detection**: DFS-based cycle detection algorithm (O(V + E) time complexity)
+- **Type Safety**: Pydantic models for request/response validation
+- **Secure CORS**: Minimal, production-ready CORS configuration
+- **Error Handling**: Structured error responses with clear messages
+
+### Quick Reference
+
+**Endpoint:** `POST http://localhost:8000/pipelines/parse`
+
+**Response Format:**
+```json
+{
+  "success": true,
+  "data": {
+    "nodeCount": 3,
+    "edgeCount": 2,
+    "isDAG": true,
+    "hasCycles": false
+  }
+}
+```
+
+For detailed API documentation, see [`backend/README.md`](./backend/README.md) or visit http://localhost:8000/docs when the backend is running.
+
 ## Notable Trade-offs
 
 | Decision | Benefit | Trade-off |
@@ -243,6 +283,8 @@ const node = createNodeFromType('dataSource', 'node-1', { x: 100, y: 100 })
 | **Client-side only** | Simpler, faster | No SSR/SEO benefits |
 | **Manual validation** | Lightweight, no deps | More verbose than schema validation |
 | **Single BaseNode component** | Consistent behavior | Slight overhead for very simple nodes |
+| **DFS for DAG detection** | Simple, readable, correct | Not optimized for very large graphs (>10K nodes) |
+| **DFS for DAG detection** | Simple, readable, correct | Not optimized for very large graphs (>10K nodes) |
 
 ## Extending the System
 
@@ -297,6 +339,33 @@ For nodes requiring custom behavior (like `TextNode`), create a separate compone
 - Dimension calculations use `requestAnimationFrame` for smooth updates
 - Payload size limited to 1000 nodes / 5000 edges (DoS protection)
 - CSS animations use GPU-friendly transforms
+- DAG detection algorithm: O(V + E) time, O(V) space complexity
+
+## Future Improvements
+
+Potential enhancements for production deployment:
+
+### Frontend
+- **Persistent Storage**: Save/load workflows from database or local storage
+- **Authentication**: User accounts and workflow ownership
+- **Collaboration**: Real-time multi-user editing
+- **Export/Import**: JSON/YAML workflow file formats
+- **Undo/Redo**: Command pattern for workflow history
+- **Node Templates**: Pre-configured node libraries
+
+### Backend
+- **Database Integration**: Store workflows, execution history
+- **Workflow Execution Engine**: Run workflows with actual data processing
+- **Authentication & Authorization**: JWT-based auth, role-based access
+- **Rate Limiting**: Protect against abuse
+- **Caching**: Cache DAG analysis results for frequently accessed workflows
+- **Webhooks**: Notify external systems on workflow events
+
+### Architecture
+- **Microservices**: Split backend into separate services (validation, execution, storage)
+- **Message Queue**: Async workflow execution via queue system
+- **Monitoring**: Metrics, logging, error tracking (Sentry, DataDog)
+- **Testing**: Comprehensive unit and integration test suite
 
 ---
 
