@@ -43,10 +43,24 @@ const VARIABLE_REGEX = /\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g
 
 // Extract unique variable names from text
 function extractVariables(text: string): string[] {
-  const matches = Array.from(text.matchAll(VARIABLE_REGEX))
-  const variables = matches.map((match) => match[1])
-  // Return unique variables, preserving order
-  return Array.from(new Set(variables))
+  // Guard: Handle null/undefined/empty text
+  if (!text || typeof text !== 'string') {
+    return []
+  }
+
+  try {
+    const matches = Array.from(text.matchAll(VARIABLE_REGEX))
+    const variables = matches
+      .map((match) => match?.[1])
+      .filter((v): v is string => Boolean(v)) // Filter out undefined/null
+
+    // Return unique variables, preserving order
+    return Array.from(new Set(variables))
+  } catch (error) {
+    // Guard: Handle regex errors (shouldn't happen, but safe)
+    console.warn('Error extracting variables:', error)
+    return []
+  }
 }
 
 export default function TextNode({ data, selected, id }: TextNodeProps) {
@@ -68,18 +82,23 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
 
   // Calculate dimensions based on text content
   const calculateDimensions = useCallback(() => {
+    // Guard: Ensure refs exist
     if (!measureRef.current) return { width: MIN_WIDTH, height: MIN_HEIGHT }
 
     const measure = measureRef.current
     const currentText = text || ' '
 
-    // Set text in measure element
-    measure.textContent = currentText
-    measure.style.width = `${MIN_WIDTH - PADDING_X * 2}px`
+    // Guard: Limit text length to prevent excessive computation
+    const safeText = currentText.length > 10000 ? currentText.substring(0, 10000) : currentText
 
-    // Get computed dimensions
-    const scrollWidth = measure.scrollWidth
-    const scrollHeight = measure.scrollHeight
+    // Set text in measure element
+    measure.textContent = safeText
+    const safeWidth = Math.max(0, MIN_WIDTH - PADDING_X * 2)
+    measure.style.width = `${safeWidth}px`
+
+    // Get computed dimensions (guard against invalid values)
+    const scrollWidth = measure.scrollWidth || 0
+    const scrollHeight = measure.scrollHeight || 0
 
     // Calculate width (with constraints)
     const contentWidth = scrollWidth + PADDING_X * 2
@@ -100,16 +119,25 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
 
   // Update node dimensions in React Flow
   const updateDimensions = useCallback(() => {
+    // Guard: Ensure valid dimensions
     const newDimensions = calculateDimensions()
-    setDimensions(newDimensions)
+    const safeWidth = Number.isFinite(newDimensions.width) ? Math.max(MIN_WIDTH, newDimensions.width) : MIN_WIDTH
+    const safeHeight = Number.isFinite(newDimensions.height) ? Math.max(MIN_HEIGHT, newDimensions.height) : MIN_HEIGHT
+    
+    setDimensions({ width: safeWidth, height: safeHeight })
+
+    // Guard: Only update if setNodes is available
+    if (!setNodes || typeof setNodes !== 'function') {
+      return
+    }
 
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
           return {
             ...node,
-            width: newDimensions.width,
-            height: newDimensions.height,
+            width: safeWidth,
+            height: safeHeight,
             data: {
               ...node.data,
               text,
@@ -181,7 +209,7 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
 
   // Render variable input handles (target handles on the left)
   const renderVariableHandles = (): React.ReactElement[] => {
-    if (!showHandles || detectedVariables.length === 0) return []
+    if (!showHandles || !detectedVariables || detectedVariables.length === 0) return []
 
     const handleStyle = {
       background: variantStyle.borderColor,
@@ -191,12 +219,19 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
       borderRadius: handleStyles.borderRadius,
     }
 
+    // Guard: Prevent division by zero
+    const variableCount = detectedVariables.length
+    if (variableCount === 0) return []
+
     // Distribute handles vertically on the left side
     // React Flow handles use percentage-based positioning
     return detectedVariables.map((variable, index) => {
+      if (!variable || typeof variable !== 'string') return null
+      
       const position = Position.Left
       // Calculate position as percentage from top (distributed evenly)
-      const topPercent = ((index + 1) / (detectedVariables.length + 1)) * 100
+      // Guard: Ensure safe division
+      const topPercent = ((index + 1) / (variableCount + 1)) * 100
       
       return (
         <Handle
@@ -206,12 +241,12 @@ export default function TextNode({ data, selected, id }: TextNodeProps) {
           position={position}
           style={{
             ...handleStyle,
-            top: `${topPercent}%`,
+            top: `${Math.max(0, Math.min(100, topPercent))}%`, // Clamp between 0-100%
           }}
           data-variable={variable}
         />
       )
-    })
+    }).filter((handle) => handle !== null) as React.ReactElement[]
   }
 
   const renderHandles = () => {

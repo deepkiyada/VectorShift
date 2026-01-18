@@ -91,15 +91,21 @@ export interface WorkflowApiResponse {
  * Transform React Flow node to API payload format
  */
 function transformNode(node: Node): WorkflowNodePayload {
+  // Guard: Ensure node has required properties
+  if (!node || !node.id || !node.position) {
+    throw new Error(`Invalid node: missing required properties (id: ${node?.id}, position: ${node?.position})`)
+  }
+
   const baseData = node.data as BaseNodeData & TextNodeData & { config?: BaseNodeConfig }
 
+  // Guard: Ensure position values are valid numbers
+  const x = Number.isFinite(node.position.x) ? node.position.x : 0
+  const y = Number.isFinite(node.position.y) ? node.position.y : 0
+
   return {
-    id: node.id,
+    id: String(node.id), // Ensure ID is string
     type: node.type || 'default',
-    position: {
-      x: node.position.x,
-      y: node.position.y,
-    },
+    position: { x, y },
     data: {
       label: baseData.label || '',
       description: baseData.description,
@@ -123,10 +129,15 @@ function transformNode(node: Node): WorkflowNodePayload {
  * Transform React Flow edge to API payload format
  */
 function transformEdge(edge: Edge): WorkflowEdgePayload {
+  // Guard: Validate edge structure
+  if (!edge || !edge.id || !edge.source || !edge.target) {
+    throw new Error(`Invalid edge: missing required properties (id: ${edge?.id}, source: ${edge?.source}, target: ${edge?.target})`)
+  }
+
   return {
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
+    id: String(edge.id), // Ensure ID is string
+    source: String(edge.source), // Ensure source is string
+    target: String(edge.target), // Ensure target is string
     sourceHandle: edge.sourceHandle || null,
     targetHandle: edge.targetHandle || null,
     type: edge.type,
@@ -144,14 +155,42 @@ export function buildWorkflowPayload(
   edges: Edge[],
   metadata?: WorkflowPayload['metadata']
 ): WorkflowPayload {
+  // Guard: Validate inputs
+  if (!Array.isArray(nodes)) {
+    throw new Error('Nodes must be an array')
+  }
+  if (!Array.isArray(edges)) {
+    throw new Error('Edges must be an array')
+  }
+
+  // Transform nodes and edges, filtering out any that fail transformation
+  const validNodes: WorkflowNodePayload[] = []
+  const validEdges: WorkflowEdgePayload[] = []
+
+  for (const node of nodes) {
+    try {
+      validNodes.push(transformNode(node))
+    } catch (error) {
+      console.warn(`Skipping invalid node: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  for (const edge of edges) {
+    try {
+      validEdges.push(transformEdge(edge))
+    } catch (error) {
+      console.warn(`Skipping invalid edge: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   return {
     version: '1.0.0',
     metadata: {
       ...metadata,
       updatedAt: new Date().toISOString(),
     },
-    nodes: nodes.map(transformNode),
-    edges: edges.map(transformEdge),
+    nodes: validNodes,
+    edges: validEdges,
   }
 }
 

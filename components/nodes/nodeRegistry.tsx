@@ -54,15 +54,32 @@ export function createNodeFromType(
   position: { x: number; y: number },
   data?: Partial<BaseNodeData>
 ) {
+  // Guard: Validate inputs
+  if (!type || typeof type !== 'string') {
+    throw new Error('Node type must be a non-empty string')
+  }
+  if (!id || typeof id !== 'string') {
+    throw new Error('Node ID must be a non-empty string')
+  }
+  if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+    throw new Error('Node position must be an object with x and y numbers')
+  }
+
   const definition = nodeTypeDefinitions[type]
   if (!definition) {
     throw new Error(`Node type "${type}" is not registered`)
   }
 
+  // Guard: Ensure position values are valid
+  const safePosition = {
+    x: Number.isFinite(position.x) ? position.x : 0,
+    y: Number.isFinite(position.y) ? position.y : 0,
+  }
+
   return {
     id,
     type,
-    position,
+    position: safePosition,
     data: {
       ...definition.defaultData,
       ...data,

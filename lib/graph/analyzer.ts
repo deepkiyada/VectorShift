@@ -256,13 +256,30 @@ export function analyzeGraph(
   nodes: WorkflowNodePayload[],
   edges: WorkflowEdgePayload[]
 ): GraphAnalysisResult {
-  // Get all node IDs
-  const nodeIds = new Set(nodes.map((node) => node.id))
+  // Guard: Handle empty or invalid inputs
+  if (!nodes || !Array.isArray(nodes)) {
+    throw new Error('Invalid nodes array')
+  }
+  if (!edges || !Array.isArray(edges)) {
+    throw new Error('Invalid edges array')
+  }
+
+  // Guard: Filter out invalid nodes (missing ID or type)
+  const validNodes = nodes.filter((node) => node?.id && node?.type)
+  if (validNodes.length === 0 && nodes.length > 0) {
+    throw new Error('No valid nodes found (all nodes missing ID or type)')
+  }
+
+  // Get all node IDs (handle duplicates by using Set)
+  const nodeIds = new Set(validNodes.map((node) => node.id))
 
   // Filter edges to only include edges between existing nodes
-  const validEdges = edges.filter(
-    (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)
-  )
+  // Also filter out self-loops and invalid edges
+  const validEdges = edges.filter((edge) => {
+    if (!edge?.source || !edge?.target) return false
+    if (edge.source === edge.target) return false // Skip self-loops
+    return nodeIds.has(edge.source) && nodeIds.has(edge.target)
+  })
 
   // Build graph structures
   const adjacencyList = buildAdjacencyList(validEdges, nodeIds)
@@ -281,13 +298,13 @@ export function analyzeGraph(
   const connectedComponents = countConnectedComponents(validEdges, nodeIds)
 
   return {
-    nodeCount: nodes.length,
+    nodeCount: validNodes.length, // Use valid nodes count
     edgeCount: validEdges.length,
     isDAG,
     hasCycles,
-    connectedComponents,
+    connectedComponents: Math.max(1, connectedComponents), // Ensure at least 1
     nodeDegrees,
-    cycles: hasCycles ? cycles : undefined,
-    topologicallySorted: topologicallySorted || undefined,
+    cycles: hasCycles && cycles.length > 0 ? cycles : undefined,
+    topologicallySorted: topologicallySorted && topologicallySorted.length > 0 ? topologicallySorted : undefined,
   }
 }

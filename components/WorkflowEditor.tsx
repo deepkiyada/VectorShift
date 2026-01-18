@@ -127,19 +127,40 @@ export default function WorkflowEditor() {
 
   // Handle workflow analysis
   const handleAnalyze = useCallback(async () => {
+    // Guard: Ensure we have nodes to analyze
+    if (!nodes || nodes.length === 0) {
+      setSubmitResult({
+        success: false,
+        error: 'Cannot analyze: workflow must contain at least one node',
+      })
+      return
+    }
+
     setIsAnalyzing(true)
     setAnalysisResult(null)
-    setSubmitResult(null) // Clear any previous submit results
+    setSubmitResult(null)
 
     try {
       const payload = buildWorkflowPayload(nodes, edges)
+      
+      // Guard: Validate payload structure before API call
+      if (!payload.nodes || payload.nodes.length === 0) {
+        throw new Error('Invalid workflow: no nodes found')
+      }
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
       const response = await fetch('/api/workflows/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -147,15 +168,31 @@ export default function WorkflowEditor() {
       }
 
       const data = await response.json()
+      
+      // Guard: Validate response structure
+      if (!data || typeof data.success !== 'boolean') {
+        throw new Error('Invalid response format from server')
+      }
+
       if (data.success && data.data?.analysis) {
         setAnalysisResult(data.data.analysis)
       } else {
         throw new Error(data.error?.message || 'Failed to analyze workflow')
       }
     } catch (error) {
+      let errorMessage = 'Failed to analyze workflow'
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Analysis request timed out. Please try again.'
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
       setSubmitResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to analyze workflow',
+        error: errorMessage,
       })
     } finally {
       setIsAnalyzing(false)
@@ -164,12 +201,21 @@ export default function WorkflowEditor() {
 
   // Handle workflow submission
   const handleSubmit = useCallback(async () => {
+    // Guard: Ensure we have nodes to submit
+    if (!nodes || nodes.length === 0) {
+      setSubmitResult({
+        success: false,
+        error: 'Cannot submit: workflow must contain at least one node',
+      })
+      return
+    }
+
     setIsSubmitting(true)
     setSubmitResult(null)
 
     try {
       // Build payload from current nodes and edges
-      const payload = buildWorkflowPayload(nodes, edges, {
+      const payload = buildWorkflowPayload(nodes, edges || [], {
         name: 'My Workflow',
         createdAt: new Date().toISOString(),
       })
@@ -200,9 +246,15 @@ export default function WorkflowEditor() {
         })
       }
     } catch (error) {
+      let errorMessage = 'An unexpected error occurred'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
       setSubmitResult({
         success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        error: errorMessage,
       })
     } finally {
       setIsSubmitting(false)

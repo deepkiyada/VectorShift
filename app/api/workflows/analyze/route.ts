@@ -13,11 +13,53 @@ import { analyzeGraph, GraphAnalysisResult } from '@/lib/graph/analyzer'
  */
 export async function POST(request: NextRequest) {
   try {
-    // Parse request body
-    const body = await request.json()
+    // Guard: Check content type
+    const contentType = request.headers.get('content-type')
+    if (!contentType?.includes('application/json')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_CONTENT_TYPE',
+            message: 'Content-Type must be application/json',
+          },
+        },
+        { status: 400 }
+      )
+    }
+
+    // Parse request body with error handling
+    let body
+    try {
+      body = await request.json()
+    } catch (parseError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_JSON',
+            message: 'Invalid JSON in request body',
+          },
+        },
+        { status: 400 }
+      )
+    }
 
     // Validate payload structure
-    if (!body || !Array.isArray(body.nodes) || !Array.isArray(body.edges)) {
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_PAYLOAD',
+            message: 'Request body must be an object',
+          },
+        },
+        { status: 400 }
+      )
+    }
+
+    if (!Array.isArray(body.nodes) || !Array.isArray(body.edges)) {
       return NextResponse.json(
         {
           success: false,
@@ -30,11 +72,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Guard: Check for reasonable payload size (prevent DoS)
+    if (body.nodes.length > 1000 || body.edges.length > 5000) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'PAYLOAD_TOO_LARGE',
+            message: 'Payload too large. Maximum 1000 nodes and 5000 edges allowed',
+          },
+        },
+        { status: 413 }
+      )
+    }
+
     // Type assertion (in production, use proper validation library like Zod)
     const payload = body as WorkflowPayload
 
-    // Analyze the graph
-    const analysis: GraphAnalysisResult = analyzeGraph(payload.nodes, payload.edges)
+    // Analyze the graph (may throw if invalid structure)
+    let analysis: GraphAnalysisResult
+    try {
+      analysis = analyzeGraph(payload.nodes, payload.edges)
+    } catch (analysisError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'ANALYSIS_ERROR',
+            message: analysisError instanceof Error ? analysisError.message : 'Failed to analyze graph',
+          },
+        },
+        { status: 400 }
+      )
+    }
 
     // Return structured response
     return NextResponse.json(
