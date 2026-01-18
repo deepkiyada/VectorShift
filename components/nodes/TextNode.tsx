@@ -48,19 +48,18 @@ function extractVariables(text: string): string[] {
     return []
   }
 
-  try {
-    const matches = Array.from(text.matchAll(VARIABLE_REGEX))
-    const variables = matches
-      .map((match) => match?.[1])
-      .filter((v): v is string => Boolean(v)) // Filter out undefined/null
+    try {
+      const matches = Array.from(text.matchAll(VARIABLE_REGEX))
+      const variables = matches
+        .map((match) => match?.[1])
+        .filter((v): v is string => Boolean(v)) // Filter out undefined/null
 
-    // Return unique variables, preserving order
-    return Array.from(new Set(variables))
-  } catch (error) {
-    // Guard: Handle regex errors (shouldn't happen, but safe)
-    console.warn('Error extracting variables:', error)
-    return []
-  }
+      // Return unique variables, preserving order
+      return Array.from(new Set(variables))
+    } catch (error) {
+      // Guard: Handle regex errors (shouldn't happen, but safe)
+      return []
+    }
 }
 
 export default function TextNode({ data, selected, id }: TextNodeProps) {

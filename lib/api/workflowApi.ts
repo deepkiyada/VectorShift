@@ -172,7 +172,7 @@ export function buildWorkflowPayload(
     try {
       validNodes.push(transformNode(node))
     } catch (error) {
-      console.warn(`Skipping invalid node: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Silently skip invalid nodes - validation happens at submission time
     }
   }
 
@@ -180,7 +180,7 @@ export function buildWorkflowPayload(
     try {
       validEdges.push(transformEdge(edge))
     } catch (error) {
-      console.warn(`Skipping invalid edge: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Silently skip invalid edges - validation happens at submission time
     }
   }
 

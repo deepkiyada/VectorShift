@@ -131,10 +131,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     )
-  } catch (error) {
-    console.error('Error analyzing workflow graph:', error)
-
-    return NextResponse.json(
+      } catch (error) {
+        return NextResponse.json(
       {
         success: false,
         error: {
