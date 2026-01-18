@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from typing import Dict
 
-from models import HealthCheckResponse
+from models import HealthCheckResponse, WorkflowPipeline, WorkflowResponse
 
 app = FastAPI(
     title="VectorShift Workflow API",
@@ -51,6 +51,35 @@ async def health() -> HealthCheckResponse:
         HealthCheckResponse with status and timestamp confirming the server is running.
     """
     return await health_check()
+
+
+@app.post("/pipelines/parse", response_model=WorkflowResponse)
+async def parse_pipeline(pipeline: WorkflowPipeline) -> WorkflowResponse:
+    """
+    Parse a workflow pipeline definition.
+    
+    Accepts a complete workflow pipeline with nodes and edges,
+    validates the structure, and returns a confirmation response.
+    
+    Args:
+        pipeline: WorkflowPipeline definition containing nodes and edges
+        
+    Returns:
+        WorkflowResponse confirming receipt with node and edge counts
+    """
+    node_count = len(pipeline.nodes) if pipeline.nodes else 0
+    edge_count = len(pipeline.edges) if pipeline.edges else 0
+    
+    return WorkflowResponse(
+        success=True,
+        message=f"Pipeline received successfully: {node_count} node(s), {edge_count} edge(s)",
+        data={
+            "nodeCount": node_count,
+            "edgeCount": edge_count,
+            "version": pipeline.version,
+            "parsedAt": datetime.utcnow().isoformat() + "Z",
+        },
+    )
 
 
 if __name__ == "__main__":

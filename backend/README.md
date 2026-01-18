@@ -75,6 +75,48 @@ Returns server status and timestamp.
 }
 ```
 
+### Parse Pipeline
+
+**POST** `/pipelines/parse`
+
+Accepts a workflow pipeline definition and returns a confirmation with node/edge counts.
+
+**Request Body:**
+```json
+{
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "start",
+      "position": { "x": 0, "y": 0 },
+      "data": { "label": "Start Node" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "node-1",
+      "target": "node-2"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Pipeline received successfully: 1 node(s), 1 edge(s)",
+  "data": {
+    "nodeCount": 1,
+    "edgeCount": 1,
+    "version": "1.0.0",
+    "parsedAt": "2024-01-01T12:00:00.000000Z"
+  }
+}
+```
+
 ## API Documentation
 
 FastAPI automatically generates interactive API documentation:
