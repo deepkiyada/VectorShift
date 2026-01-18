@@ -2,35 +2,89 @@
 
 A Next.js-based visual workflow editor built on React Flow, featuring a configuration-driven node system that enables rapid extensibility with minimal code duplication.
 
-## Quick Start
+## 🚀 Getting Started
 
-### Frontend
+> **For Reviewers:** Start here to run the project quickly
 
+- **⚡ Quick Setup (5 min)**: [QUICKSTART.md](./QUICKSTART.md) - Fastest path to running
+- **📋 Detailed Setup**: [SETUP.md](./SETUP.md) - Complete step-by-step instructions
+- **📝 Submission Context**: [SUBMISSION_NOTES.md](./SUBMISSION_NOTES.md) - Project overview for reviewers
+
+### TL;DR Setup
+
+**Terminal 1 - Backend:**
 ```bash
-npm install
-npm run dev
+cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && uvicorn main:app --reload --port 8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Production build: `npm run build && npm start`
+**Terminal 2 - Frontend:**
+```bash
+npm install && npm run dev
+```
 
-### Backend
+**Open:** http://localhost:3000
 
+**Verify:** Both servers must be running. Backend at http://localhost:8000, Frontend at http://localhost:3000.
+
+## Quick Start
+
+> **📋 For detailed setup instructions, see [SETUP.md](./SETUP.md)**
+
+### Prerequisites
+
+- **Node.js 18+** and npm ([download](https://nodejs.org/))
+- **Python 3.9+** ([download](https://www.python.org/downloads/))
+- **pip3** (usually included with Python)
+
+### Step-by-Step Setup
+
+**1. Install Frontend Dependencies:**
+```bash
+npm install
+```
+
+**2. Install Backend Dependencies:**
 ```bash
 cd backend
-pip3 install -r requirements.txt
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**3. Start Backend Server** (keep this terminal open):
+```bash
+cd backend
+source venv/bin/activate  # If not already activated
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Environment Variables
+Verify backend is running: http://localhost:8000 (should show JSON response)
 
-Create a `.env.local` file in the project root:
+**4. Start Frontend Server** (open a new terminal):
+```bash
+# From project root
+npm run dev
+```
+
+**5. Open Application:**
+Open http://localhost:3000 in your browser
+
+### Environment Variables (Optional)
+
+Default backend URL is `http://localhost:8000` - no configuration needed. To customize, create `.env.local`:
 
 ```env
-# Backend API URL (default: http://localhost:8000)
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
-The frontend will automatically connect to the backend at this URL when submitting workflows.
+### Verification
+
+After starting both servers:
+- ✅ Frontend: http://localhost:3000 (should show workflow editor)
+- ✅ Backend: http://localhost:8000 (should show `{"status":"healthy",...}`)
+- ✅ Backend API Docs: http://localhost:8000/docs (interactive API documentation)
+
+**Important:** Both servers must be running simultaneously. Frontend requires backend for workflow submission and analysis.
 
 ## Architecture Overview
 
