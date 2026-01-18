@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import ReactFlow, {
   Edge,
   addEdge,
@@ -24,6 +24,12 @@ import {
   nodeVariants,
 } from './nodes/designSystem'
 import { handleConfigs } from './nodes/nodeTypes'
+import {
+  buildWorkflowPayload,
+  submitWorkflow,
+  validateWorkflowPayload,
+  type WorkflowApiResponse,
+} from '@/lib/api'
 
 // Example: Creating nodes using the configuration-based system
 // Demonstrates both original and new node types
@@ -96,6 +102,12 @@ const initialEdges: Edge[] = [
 export default function WorkflowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<{
+    success: boolean
+    message?: string
+    error?: string
+  } | null>(null)
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -104,6 +116,53 @@ export default function WorkflowEditor() {
 
   // Get node types from the registry
   const nodeTypes = useNodeTypes()
+
+  // Handle workflow submission
+  const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true)
+    setSubmitResult(null)
+
+    try {
+      // Build payload from current nodes and edges
+      const payload = buildWorkflowPayload(nodes, edges, {
+        name: 'My Workflow',
+        createdAt: new Date().toISOString(),
+      })
+
+      // Validate payload before submission
+      const validation = validateWorkflowPayload(payload)
+      if (!validation.valid) {
+        setSubmitResult({
+          success: false,
+          error: `Validation failed: ${validation.errors.join(', ')}`,
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      // Submit to API
+      const response: WorkflowApiResponse = await submitWorkflow(payload)
+
+      if (response.success) {
+        setSubmitResult({
+          success: true,
+          message: response.data?.message || 'Workflow submitted successfully',
+        })
+      } else {
+        setSubmitResult({
+          success: false,
+          error: response.error?.message || 'Failed to submit workflow',
+        })
+      }
+    } catch (error) {
+      setSubmitResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [nodes, edges])
 
   return (
     <div
@@ -180,11 +239,67 @@ export default function WorkflowEditor() {
               fontSize: typography.fontSize.sm,
               color: colors.gray[600],
               margin: 0,
+              marginBottom: spacing.md,
               lineHeight: typography.lineHeight.normal,
             }}
           >
             Drag nodes and connect them to build your workflow
           </p>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            style={{
+              width: '100%',
+              padding: `${spacing.sm} ${spacing.md}`,
+              background: isSubmitting ? colors.gray[400] : colors.primary[600],
+              color: 'white',
+              border: 'none',
+              borderRadius: borderRadius.md,
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.semibold,
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              opacity: isSubmitting ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.background = colors.primary[700]
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.background = colors.primary[600]
+              }
+            }}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Workflow'}
+          </button>
+          {submitResult && (
+            <div
+              style={{
+                marginTop: spacing.md,
+                padding: spacing.sm,
+                borderRadius: borderRadius.md,
+                background: submitResult.success ? colors.success[50] : colors.error[50],
+                border: `1px solid ${submitResult.success ? colors.success[300] : colors.error[300]}`,
+                color: submitResult.success ? colors.success[800] : colors.error[800],
+                fontSize: typography.fontSize.xs,
+                lineHeight: typography.lineHeight.normal,
+              }}
+            >
+              {submitResult.success ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                  <span>✓</span>
+                  <span>{submitResult.message}</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                  <span>✗</span>
+                  <span>{submitResult.error}</span>
+                </div>
+              )}
+            </div>
+          )}
         </Panel>
       </ReactFlow>
     </div>
