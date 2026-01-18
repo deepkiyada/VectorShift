@@ -73,6 +73,7 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
     cursor: 'pointer',
     position: 'relative',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    transform: 'scale(1)',
   }
 
   // Helper to render handles of a specific type
@@ -164,7 +165,21 @@ export default function BaseNode({ data, selected }: BaseNodeProps) {
       : {}
 
   return (
-    <div style={{ ...baseStyle, ...runningStyle }}>
+    <div
+      style={{ ...baseStyle, ...runningStyle }}
+      onMouseEnter={(e) => {
+        if (!selected) {
+          e.currentTarget.style.boxShadow = shadows.lg
+          e.currentTarget.style.transform = 'scale(1.02)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!selected) {
+          e.currentTarget.style.boxShadow = shadows.md
+          e.currentTarget.style.transform = 'scale(1)'
+        }
+      }}
+    >
       {renderHandles()}
       {renderContent()}
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { CSSProperties } from 'react'
+import { CSSProperties, useEffect } from 'react'
 import {
   colors,
   spacing,
@@ -37,6 +37,30 @@ export default function WorkflowStatisticsAlert({
   const { isDAG, hasCycles, nodeCount, edgeCount, connectedComponents, cycles, topologicallySorted } =
     analysis
 
+  // Add CSS animation for alert
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'workflow-alert-animations'
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style')
+        style.id = styleId
+        style.textContent = `
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateX(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+        `
+        document.head.appendChild(style)
+      }
+    }
+  }, [])
+
   // Determine alert variant based on analysis results
   const variant = isDAG ? 'success' : 'warning'
   const variantColors = isDAG
@@ -61,6 +85,7 @@ export default function WorkflowStatisticsAlert({
     boxShadow: shadows.lg,
     maxWidth: '480px',
     position: 'relative',
+    animation: 'slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 
   const headerStyle: CSSProperties = {
@@ -89,7 +114,13 @@ export default function WorkflowStatisticsAlert({
     padding: spacing.xs,
     lineHeight: 1,
     opacity: 0.6,
-    transition: 'opacity 0.2s',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    borderRadius: borderRadius.sm,
+    width: '24px',
+    height: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 
   const statGridStyle: CSSProperties = {
@@ -200,8 +231,16 @@ export default function WorkflowStatisticsAlert({
           <button
             onClick={onClose}
             style={closeButtonStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '1'
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
+              e.currentTarget.style.transform = 'scale(1.1)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '0.6'
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
             aria-label="Close"
           >
             ×

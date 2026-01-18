@@ -261,6 +261,29 @@ export default function WorkflowEditor() {
     }
   }, [nodes, edges])
 
+  // Add CSS animations for buttons and messages
+  if (typeof document !== 'undefined') {
+    const styleId = 'workflow-editor-animations'
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style')
+      style.id = styleId
+      style.textContent = `
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+          from { transform: scale(0); }
+          to { transform: scale(1); }
+        }
+      `
+      document.head.appendChild(style)
+    }
+  }
+
   return (
     <div
       style={{
@@ -362,73 +385,181 @@ export default function WorkflowEditor() {
                 fontSize: typography.fontSize.sm,
                 fontWeight: typography.fontWeight.semibold,
                 cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 opacity: isAnalyzing ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: spacing.xs,
+                boxShadow: isAnalyzing ? 'none' : shadows.sm,
+                transform: 'translateY(0)',
+                outline: 'none',
               }}
               onMouseEnter={(e) => {
                 if (!isAnalyzing) {
                   e.currentTarget.style.background = colors.info[700]
+                  e.currentTarget.style.boxShadow = shadows.md
+                  e.currentTarget.style.transform = 'translateY(-1px)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isAnalyzing) {
                   e.currentTarget.style.background = colors.info[600]
+                  e.currentTarget.style.boxShadow = shadows.sm
+                  e.currentTarget.style.transform = 'translateY(0)'
                 }
               }}
+              onMouseDown={(e) => {
+                if (!isAnalyzing) {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }
+              }}
+              onMouseUp={(e) => {
+                if (!isAnalyzing) {
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = shadows.md
+                }
+              }}
+              onFocus={(e) => {
+                if (!isAnalyzing) {
+                  e.currentTarget.style.outline = `2px solid ${colors.info[500]}`
+                  e.currentTarget.style.outlineOffset = '2px'
+                }
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.outline = 'none'
+              }}
             >
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Workflow'}
+              {isAnalyzing && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '14px',
+                    height: '14px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'spin 0.6s linear infinite',
+                  }}
+                />
+              )}
+              <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Workflow'}</span>
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-            style={{
-              width: '100%',
-              padding: `${spacing.sm} ${spacing.md}`,
-              background: isSubmitting ? colors.gray[400] : colors.primary[600],
-              color: 'white',
-              border: 'none',
-              borderRadius: borderRadius.md,
-              fontSize: typography.fontSize.sm,
-              fontWeight: typography.fontWeight.semibold,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: isSubmitting ? 0.7 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!isSubmitting) {
-                e.currentTarget.style.background = colors.primary[700]
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isSubmitting) {
-                e.currentTarget.style.background = colors.primary[600]
-              }
-            }}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Workflow'}
-          </button>
+              style={{
+                width: '100%',
+                padding: `${spacing.sm} ${spacing.md}`,
+                background: isSubmitting ? colors.gray[400] : colors.primary[600],
+                color: 'white',
+                border: 'none',
+                borderRadius: borderRadius.md,
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.semibold,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                opacity: isSubmitting ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: spacing.xs,
+                boxShadow: isSubmitting ? 'none' : shadows.sm,
+                transform: 'translateY(0)',
+                outline: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.background = colors.primary[700]
+                  e.currentTarget.style.boxShadow = shadows.md
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.background = colors.primary[600]
+                  e.currentTarget.style.boxShadow = shadows.sm
+                  e.currentTarget.style.transform = 'translateY(0)'
+                }
+              }}
+              onMouseDown={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }
+              }}
+              onMouseUp={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.boxShadow = shadows.md
+                }
+              }}
+              onFocus={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.outline = `2px solid ${colors.primary[500]}`
+                  e.currentTarget.style.outlineOffset = '2px'
+                }
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.outline = 'none'
+              }}
+            >
+              {isSubmitting && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '14px',
+                    height: '14px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'spin 0.6s linear infinite',
+                  }}
+                />
+              )}
+              <span>{isSubmitting ? 'Submitting...' : 'Submit Workflow'}</span>
+            </button>
           </div>
           {submitResult && (
             <div
               style={{
                 marginTop: spacing.md,
-                padding: spacing.sm,
+                padding: `${spacing.sm} ${spacing.md}`,
                 borderRadius: borderRadius.md,
                 background: submitResult.success ? colors.success[50] : colors.error[50],
                 border: `1px solid ${submitResult.success ? colors.success[300] : colors.error[300]}`,
                 color: submitResult.success ? colors.success[800] : colors.error[800],
-                fontSize: typography.fontSize.xs,
+                fontSize: typography.fontSize.sm,
                 lineHeight: typography.lineHeight.normal,
+                animation: 'fadeIn 0.3s ease-out',
+                boxShadow: shadows.sm,
               }}
             >
               {submitResult.success ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
-                  <span>✓</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                  <span
+                    style={{
+                      fontSize: '16px',
+                      lineHeight: 1,
+                      animation: 'scaleIn 0.2s ease-out',
+                    }}
+                  >
+                    ✓
+                  </span>
                   <span>{submitResult.message}</span>
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
-                  <span>✗</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                  <span
+                    style={{
+                      fontSize: '16px',
+                      lineHeight: 1,
+                      animation: 'scaleIn 0.2s ease-out',
+                    }}
+                  >
+                    ✗
+                  </span>
                   <span>{submitResult.error}</span>
                 </div>
               )}
