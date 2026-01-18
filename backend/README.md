@@ -107,21 +107,32 @@ Accepts a workflow pipeline definition and returns a confirmation with node/edge
 ```json
 {
   "success": true,
-  "message": "Pipeline received successfully: 1 node(s), 1 edge(s)",
+  "message": "Pipeline received: 1 node(s), 1 edge(s), valid DAG",
   "data": {
     "nodeCount": 1,
     "edgeCount": 1,
+    "isDAG": true,
+    "hasCycles": false,
     "version": "1.0.0",
     "parsedAt": "2024-01-01T12:00:00.000000Z"
   }
 }
 ```
 
+**Response Fields (matches frontend GraphAnalysisData contract):**
+- `nodeCount`: Number of valid nodes (integer)
+- `edgeCount`: Number of valid edges (integer)
+- `isDAG`: Boolean indicating if the graph is a Directed Acyclic Graph (true = no cycles, false = contains cycles)
+- `hasCycles`: Boolean indicating if the graph contains cycles (inverse of isDAG)
+- `version`: Pipeline schema version
+- `parsedAt`: ISO timestamp of parsing
+
 **Notes:**
 - Node count includes only valid nodes (with `id`, `position`, and `data` fields)
 - Edge count includes only valid edges (with `id`, `source`, and `target` fields)
 - Counts are calculated accurately regardless of node/edge content or structure
-- Empty pipelines return 0 for both counts
+- Empty pipelines return 0 for both counts and are considered valid DAGs (no cycles possible)
+- DAG validation uses DFS-based cycle detection algorithm
 
 ## API Documentation
 

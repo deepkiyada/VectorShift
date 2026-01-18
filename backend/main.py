@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Dict
 
 from models import HealthCheckResponse, WorkflowPipeline, WorkflowResponse
+from graph_utils import is_dag, detect_cycles
 
 app = FastAPI(
     title="VectorShift Workflow API",
@@ -60,46 +61,57 @@ async def parse_pipeline(pipeline: WorkflowPipeline) -> WorkflowResponse:
     
     Accepts a complete workflow pipeline with nodes and edges,
     validates the structure, and returns a confirmation response with
-    accurate node and edge counts.
+    accurate node count, edge count, and DAG validity.
     
     Args:
         pipeline: WorkflowPipeline definition containing nodes and edges
         
     Returns:
-        WorkflowResponse confirming receipt with node and edge counts
+        WorkflowResponse with node count, edge count, and DAG validity
+        Matches frontend contract format (GraphAnalysisData interface)
     """
-    # Calculate node count - handle None and filter invalid entries
-    # Pydantic validates structure, but we ensure counts are accurate regardless of content
-    if pipeline.nodes is None:
-        node_count = 0
-    else:
-        # Count valid nodes (exclude None entries and ensure required fields have values)
-        node_count = sum(
-            1
-            for node in pipeline.nodes
-            if node is not None and node.id and node.position and node.data
-        )
+    # Filter valid nodes and edges for accurate counting and validation
+    valid_nodes = [
+        node for node in (pipeline.nodes or [])
+        if node is not None and node.id and node.position and node.data
+    ]
+    valid_edges = [
+        edge for edge in (pipeline.edges or [])
+        if edge is not None and edge.id and edge.source and edge.target
+    ]
 
-    # Calculate edge count - handle None and filter invalid entries
-    if pipeline.edges is None:
-        edge_count = 0
-    else:
-        # Count valid edges (exclude None entries and ensure required fields have values)
-        edge_count = sum(
-            1
-            for edge in pipeline.edges
-            if edge is not None and edge.id and edge.source and edge.target
-        )
+    # Calculate accurate counts
+    node_count = len(valid_nodes)
+    edge_count = len(valid_edges)
+
+    # Determine DAG validity using cycle detection
+    # Empty graph is considered a valid DAG (no cycles possible)
+    has_cycles = False
+    is_valid_dag = True
+    
+    if node_count > 0:
+        has_cycles = detect_cycles(valid_nodes, valid_edges)
+        is_valid_dag = is_dag(valid_nodes, valid_edges)
+
+    # Build response matching frontend GraphAnalysisData interface
+    response_data = {
+        "nodeCount": node_count,
+        "edgeCount": edge_count,
+        "isDAG": is_valid_dag,
+        "hasCycles": has_cycles,
+        "version": pipeline.version,
+        "parsedAt": datetime.utcnow().isoformat() + "Z",
+    }
+
+    # Build success message
+    dag_status = "valid DAG" if is_valid_dag else "contains cycles"
+    message = (
+        f"Pipeline received: {node_count} node(s), {edge_count} edge(s), {dag_status}")
 
     return WorkflowResponse(
         success=True,
-        message=f"Pipeline received successfully: {node_count} node(s), {edge_count} edge(s)",
-        data={
-            "nodeCount": node_count,
-            "edgeCount": edge_count,
-            "version": pipeline.version,
-            "parsedAt": datetime.utcnow().isoformat() + "Z",
-        },
+        message=message,
+        data=response_data,
     )
 
 
